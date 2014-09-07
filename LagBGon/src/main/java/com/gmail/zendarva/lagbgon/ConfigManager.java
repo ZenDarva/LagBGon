@@ -106,7 +106,11 @@ public class ConfigManager {
 		timeInterval = newInterval;
 		Save();
 	}
-	
+	public void changeTPSForUnload(int newTPS)
+	{
+		TPSForUnload = newTPS;
+		Save();
+	}
 	
 	public void toggleItem(Item item)
 	{
@@ -153,17 +157,25 @@ public class ConfigManager {
 	
 	private void Save()
 	{
+		Property prop;
+		prop = config.get(Configuration.CATEGORY_GENERAL, "EntityBlackList", "");
+		prop.set(entityBlacklist.toArray(new String[entityBlacklist.size()]));
+		prop.comment ="List of Entities not to destroy.";
 		
-		config.get(Configuration.CATEGORY_GENERAL, "EntityBlackList", "").set(entityBlacklist.toArray(new String[entityBlacklist.size()]));
+		prop = config.get(Configuration.CATEGORY_GENERAL, "ItemBlackList", "");
+		prop.set(itemBlacklist.toArray(new String[entityBlacklist.size()]));
+		prop.comment = "List of Items not to destroy";
 		
-		
-		config.get(Configuration.CATEGORY_GENERAL, "ItemBlackList", "").set(itemBlacklist.toArray(new String[entityBlacklist.size()]));
-	
-		System.out.println(itemBlacklist.toArray(new String[entityBlacklist.size()]));
-		
-		config.get(Configuration.CATEGORY_GENERAL, "Interval", 0).set(timeInterval);
+		prop = config.get(Configuration.CATEGORY_GENERAL, "Interval", 0);
+		prop.set(timeInterval);
+		prop.comment = "Interval between clearing entities in minutes.";
 		
 		config.get(Configuration.CATEGORY_GENERAL, "AutomaticRemoval", true).set(automaticRemoval);
+		
+		prop = config.get(Configuration.CATEGORY_GENERAL, "TPSForUnload", 12);
+		prop.set(TPSForUnload);
+		prop.comment = "If the server's main TPS drops below this number, \n Lag'B'Gon will try to unload chunks to improve TPS";
+
 		
 		config.save();
 	}

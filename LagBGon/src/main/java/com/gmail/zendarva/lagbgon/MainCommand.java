@@ -56,6 +56,11 @@ public class MainCommand extends CommandBase {
 			sender.addChatMessage(chat);
 			chat = new ChatComponentText("/bgon toggleauto : Toggles automatic clearing of entities, and unloading of chunks.");
 			sender.addChatMessage(chat);
+			chat = new ChatComponentText("/bgon listitems : Lists the items in the blacklist.");
+			sender.addChatMessage(chat);
+			chat = new ChatComponentText("/bgon listentities : Lists the entities in the blacklist.");
+			sender.addChatMessage(chat);
+
 			break;
 		case 1:
 			if (args[0].equals("listitems"))
@@ -64,6 +69,30 @@ public class MainCommand extends CommandBase {
 				chat = new ChatComponentText("Item Blacklist contains:");
 				sender.addChatMessage(chat);
 				for (String item : ConfigManager.itemBlacklist)
+				{
+					if (line.length() > 40)
+					{
+						chat = new ChatComponentText(line.toString());
+						sender.addChatMessage(chat);
+						line = new StringBuilder();
+					}
+						line.append(item);
+						line.append(", ");						
+				}
+				if (line.length() > 0)
+				{
+					chat = new ChatComponentText((String) line.toString().subSequence(0, line.length()-2));
+					sender.addChatMessage(chat);
+				}
+				return;
+			}
+			
+			if (args[0].equals("listentities"))
+			{
+				StringBuilder line = new StringBuilder();
+				chat = new ChatComponentText("Entity Blacklist contains:");
+				sender.addChatMessage(chat);
+				for (String item : ConfigManager.entityBlacklist)
 				{
 					if (line.length() > 40)
 					{
@@ -199,8 +228,6 @@ public class MainCommand extends CommandBase {
 		ChatComponentText chat = new ChatComponentText("Lag'B'Gon has removed " + itemsRemoved + " items and ");
 		chat.appendText(entitiesRemoved + " entities");
 		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(chat);
-		chat = new ChatComponentText("There are " + chunksLoaded + " chunks loaded");
-		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(chat);
 	}
 	
 
@@ -212,7 +239,7 @@ public class MainCommand extends CommandBase {
 
 	
 	
-	private long mean(long num[])
+	private static long mean(long num[])
 	{
 		long val = 0;
 		for (long n : num)
@@ -222,7 +249,7 @@ public class MainCommand extends CommandBase {
 		return val/num.length;
 	}
 	
-	private void checkTPS()
+	public static void checkTPS()
 	{
 		double meanTickTime = mean(MinecraftServer.getServer().tickTimeArray) * 1.0E-6D;
         double meanTPS = Math.min(1000.0/meanTickTime, 20);
