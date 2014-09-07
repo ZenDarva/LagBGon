@@ -20,7 +20,6 @@ public class TickHandler {
 		}
 		if (nextClear < System.currentTimeMillis() && ConfigManager.automaticRemoval == true)
 		{
-			//chat = new ChatComponentText("Loaded Chunks: " MinecraftServer.getServer().)
 			if (warned == true)
 			{
 				nextClear = (long)( System.currentTimeMillis() + (ConfigManager.timeInterval * 1000 * 60));

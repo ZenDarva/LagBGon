@@ -1,5 +1,9 @@
 package com.gmail.zendarva.lagbgon;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Random;
+
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
@@ -9,12 +13,13 @@ import net.minecraft.item.Item;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraftforge.common.DimensionManager;
 
 public class MainCommand extends CommandBase {
 
 	private static ConfigManager config = ConfigManager.instance();
-	private static int chunksLoaded = 0;
 	private static long nextUnload;
 	
 	@Override
@@ -41,24 +46,25 @@ public class MainCommand extends CommandBase {
 		else
 			return;
 		
-		System.out.println(args.length);
 		
 		switch (args.length)
 		{
 		case 0:
-			chat = new ChatComponentText("/bgon toggleitem : toggles the blacklist status of held item\n\r");
+			chat = new ChatComponentText("/bgon toggleitem : toggles the blacklist status of held item");
 			sender.addChatMessage(chat);
-			chat = new ChatComponentText("/bgon toggleentitiy <name>: toggles the blacklist status of the named entity\n\r");
+			chat = new ChatComponentText("/bgon toggleentitiy <name>: toggles the blacklist status of the named entity");
 			sender.addChatMessage(chat);
-			chat = new ChatComponentText("/bgon clear : Clears all items/entities from the world not on blacklist\n\r");
+			chat = new ChatComponentText("/bgon clear : Clears all items/entities from the world not on blacklist");
 			sender.addChatMessage(chat);
-			chat = new ChatComponentText("/bgon interval <minutes> : sets the interval for automatic running of /bgon clear\n\r" );
+			chat = new ChatComponentText("/bgon interval <minutes> : sets the interval for automatic running of /bgon clear" );
 			sender.addChatMessage(chat);
 			chat = new ChatComponentText("/bgon toggleauto : Toggles automatic clearing of entities, and unloading of chunks.");
 			sender.addChatMessage(chat);
 			chat = new ChatComponentText("/bgon listitems : Lists the items in the blacklist.");
 			sender.addChatMessage(chat);
 			chat = new ChatComponentText("/bgon listentities : Lists the entities in the blacklist.");
+			sender.addChatMessage(chat);
+			chat = new ChatComponentText("/bgon settps <target tps> : Sets the maximum TPS for unloading chunks.");
 			sender.addChatMessage(chat);
 
 			break;
@@ -187,6 +193,15 @@ public class MainCommand extends CommandBase {
 				chat = new ChatComponentText("Automatic removal interval set to: " + (newInterval + 1));
 				sender.addChatMessage(chat);
 			}
+			
+			if (args[0].equals("settps"))
+			{
+				int newTPS = Integer.parseInt(args[1]);
+				config.changeTPSForUnload(newTPS);
+				chat = new ChatComponentText("New TPS minimum set to: " + newTPS);
+				sender.addChatMessage(chat);
+			}
+					
 		}
 
 	}
@@ -197,19 +212,24 @@ public class MainCommand extends CommandBase {
 		Entity entity;
 		int itemsRemoved =0;
 		int entitiesRemoved = 0;
-		chunksLoaded = 0;
+		ArrayList<Object> toRemove = new ArrayList<Object>();
 		for (World world : DimensionManager.getWorlds())
 		{
 			if (world == null)
 				continue;
-			for (Object obj  :  world.loadedEntityList)
+			//Seriously? I'm passing you to an object.  Who the hell cares?!?
+			@SuppressWarnings("unchecked")
+			Iterator<Object> iter = world.loadedEntityList.iterator();
+			Object obj;
+			while (iter.hasNext())
 			{
+				obj = iter.next();
 				if (obj instanceof EntityItem)
 				{
 					item = (EntityItem) obj;
 					if (!config.isBlacklisted(item.getEntityItem().getItem()))
 					{
-						item.setDead();
+						toRemove.add(item);
 						itemsRemoved++;
 					}
 						
@@ -219,11 +239,16 @@ public class MainCommand extends CommandBase {
 					entity = (Entity) obj;
 					if (!config.isBlacklisted(entity))
 					{
-						entity.setDead();
+						toRemove.add(entity);
 						entitiesRemoved++;
 					}
 				}
 			}
+			for (Object o : toRemove)
+			{
+					((Entity)o).setDead();
+			}
+			toRemove.clear();
 		}
 		ChatComponentText chat = new ChatComponentText("Lag'B'Gon has removed " + itemsRemoved + " items and ");
 		chat.appendText(entitiesRemoved + " entities");
@@ -251,23 +276,40 @@ public class MainCommand extends CommandBase {
 	
 	public static void checkTPS()
 	{
+		ChunkProviderServer cPS;
 		double meanTickTime = mean(MinecraftServer.getServer().tickTimeArray) * 1.0E-6D;
         double meanTPS = Math.min(1000.0/meanTickTime, 20);
+        
+        int oldChunksLoaded;
+        int newChunksLoaded;
+        
         if (nextUnload < System.currentTimeMillis())
         {
         	if (meanTPS < ConfigManager.TPSForUnload)
         	{
-        		chunksLoaded = 0;
-        		for (World world : DimensionManager.getWorlds())
+        		oldChunksLoaded = 0;
+        		newChunksLoaded = 0;
+        		for (WorldServer world : DimensionManager.getWorlds())
         		{
-        			chunksLoaded += world.provider.worldObj.getChunkProvider().getLoadedChunkCount();
-        			world.provider.worldObj.getChunkProvider().unloadQueuedChunks();
-        			System.out.println(world.provider.worldObj.getChunkProvider().getLoadedChunkCount()+ " in " + world.provider.dimensionId);
+        			oldChunksLoaded += world.getChunkProvider().getLoadedChunkCount();
+        			if (world.getChunkProvider() instanceof ChunkProviderServer)
+        			{
+        				cPS = (ChunkProviderServer) world.getChunkProvider();
+        				cPS.unloadAllChunks();
+        				cPS.unloadQueuedChunks();
+        			}
+        			
+        			
+        			newChunksLoaded +=world.getChunkProvider().getLoadedChunkCount();
         		}
-        		nextUnload = (long)( System.currentTimeMillis() + (ConfigManager.timeInterval * 1000 * 60));
+        		nextUnload = (long)( System.currentTimeMillis() + ((new Random().nextInt(3)+1) * 1000 * 60));
+        		ChatComponentText chat = new ChatComponentText((oldChunksLoaded - newChunksLoaded) + " chunks unloaded by Lag'B'Gon.");
+        		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(chat);
+        		
         	}
         }
 	}
-	
-
 }
+	
+	
+	
