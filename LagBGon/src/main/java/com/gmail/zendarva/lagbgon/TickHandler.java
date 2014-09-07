@@ -12,7 +12,11 @@ public class TickHandler {
 	public void onServerTick(ServerTickEvent event)
 	{
 		ChatComponentText chat;
-		MainCommand.checkTPS();
+		if (MainCommand.checkTPS())
+		{
+			return;
+		}
+		
 		if (nextClear == 0)
 		{
 			nextClear = (long)( System.currentTimeMillis() + (ConfigManager.timeInterval * 1000 * 60));

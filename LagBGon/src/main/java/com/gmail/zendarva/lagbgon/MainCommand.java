@@ -1,5 +1,6 @@
 package com.gmail.zendarva.lagbgon;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
@@ -7,13 +8,16 @@ import java.util.Random;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraftforge.common.DimensionManager;
 
@@ -66,9 +70,15 @@ public class MainCommand extends CommandBase {
 			sender.addChatMessage(chat);
 			chat = new ChatComponentText("/bgon settps <target tps> : Sets the maximum TPS for unloading chunks.");
 			sender.addChatMessage(chat);
+			chat = new ChatComponentText("/bgon unload : Unloads unused chunks.");
+			sender.addChatMessage(chat);
 
 			break;
 		case 1:
+			if (args[0].equals("unload"))
+			{
+				unloadChunks();
+			}
 			if (args[0].equals("listitems"))
 			{
 				StringBuilder line = new StringBuilder();
@@ -217,6 +227,10 @@ public class MainCommand extends CommandBase {
 		{
 			if (world == null)
 				continue;
+			if (world.isRemote)
+			{
+				System.out.println("How?!?");
+			}
 			//Seriously? I'm passing you to an object.  Who the hell cares?!?
 			@SuppressWarnings("unchecked")
 			Iterator<Object> iter = world.loadedEntityList.iterator();
@@ -274,41 +288,82 @@ public class MainCommand extends CommandBase {
 		return val/num.length;
 	}
 	
-	public static void checkTPS()
+	private static boolean unloadChunks()
 	{
-		ChunkProviderServer cPS;
-		double meanTickTime = mean(MinecraftServer.getServer().tickTimeArray) * 1.0E-6D;
-        double meanTPS = Math.min(1000.0/meanTickTime, 20);
-        
+		
+        ChunkProviderServer cPS;
         int oldChunksLoaded;
         int newChunksLoaded;
+        Chunk chunk;
+        EntityPlayerMP player;
+        boolean unloadSafe = true;
+
+		
+		oldChunksLoaded = 0;
+		newChunksLoaded = 0;
+		for (WorldServer world : DimensionManager.getWorlds())
+		{
+			oldChunksLoaded += world.getChunkProvider().getLoadedChunkCount();
+			if (world.getChunkProvider() instanceof ChunkProviderServer)
+			{
+				cPS = (ChunkProviderServer) world.getChunkProvider();
+				
+				Iterator iter = cPS.loadedChunks.iterator();
+				
+				while (iter.hasNext())
+				{
+					chunk = (Chunk) iter.next();
+					unloadSafe = true;
+					for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList)
+					{
+						player = (EntityPlayerMP) obj;
+						
+						if ((player.chunkCoordX == chunk.xPosition && player.chunkCoordZ == chunk.zPosition))
+						{
+							unloadSafe = false;
+						}
+					}
+					if (unloadSafe)
+						cPS.unloadChunksIfNotNearSpawn(chunk.xPosition, chunk.zPosition);
+						
+				}
+				cPS.unloadQueuedChunks();
+				
+			}
+			newChunksLoaded +=world.getChunkProvider().getLoadedChunkCount();
+		}
+		nextUnload = (long)( System.currentTimeMillis() + ((new Random().nextInt(3)+1) * 1000 * 60));
+		ChatComponentText chat = new ChatComponentText((oldChunksLoaded - newChunksLoaded) + " chunks unloaded by Lag'B'Gon.");
+		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(chat);
+		
+		
+		for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList)
+		{
+			player = (EntityPlayerMP) obj;
+			
+			
+		}
+			return true;
+		
+	}
+	
+	public static boolean checkTPS()
+	{
+		
+		double meanTickTime = mean(MinecraftServer.getServer().tickTimeArray) * 1.0E-6D;
+        double meanTPS = Math.min(1000.0/meanTickTime, 20);
         
         if (nextUnload < System.currentTimeMillis())
         {
         	if (meanTPS < ConfigManager.TPSForUnload)
         	{
-        		oldChunksLoaded = 0;
-        		newChunksLoaded = 0;
-        		for (WorldServer world : DimensionManager.getWorlds())
-        		{
-        			oldChunksLoaded += world.getChunkProvider().getLoadedChunkCount();
-        			if (world.getChunkProvider() instanceof ChunkProviderServer)
-        			{
-        				cPS = (ChunkProviderServer) world.getChunkProvider();
-        				cPS.unloadAllChunks();
-        				cPS.unloadQueuedChunks();
-        			}
-        			
-        			
-        			newChunksLoaded +=world.getChunkProvider().getLoadedChunkCount();
-        		}
-        		nextUnload = (long)( System.currentTimeMillis() + ((new Random().nextInt(3)+1) * 1000 * 60));
-        		ChatComponentText chat = new ChatComponentText((oldChunksLoaded - newChunksLoaded) + " chunks unloaded by Lag'B'Gon.");
-        		MinecraftServer.getServer().getConfigurationManager().sendChatMsg(chat);
-        		
+        		unloadChunks();
+        		return true;
         	}
         }
+        return false;
 	}
+	
 }
 	
 	
