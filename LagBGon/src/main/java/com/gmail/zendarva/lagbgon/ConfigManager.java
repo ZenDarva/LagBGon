@@ -21,6 +21,9 @@ public class ConfigManager {
 	public static boolean automaticRemoval;
 	public static int TPSForUnload;
 	
+	public static int crowdLimit;
+	public static boolean policeCrowd;
+	
 	
 	private static ConfigManager myInstance; 
 	
@@ -77,6 +80,16 @@ public class ConfigManager {
 		prop.comment = "If the server's main TPS drops below this number, \n Lag'B'Gon will try to unload chunks to improve TPS";
 		TPSForUnload = prop.getInt();
 		
+		prop = config.get("Breeding", "CrowdLimit", 10);
+		crowdLimit = prop.getInt();
+		
+		prop = config.get("Breeding", "PoliceCrowding", false);
+		prop.comment ="Prevent overbreeding.  If at least CrowdLimit breedable \n animals are within five blocks, new babies will not \nspawn.";
+		prop.comment = prop.comment + "\n Setting this value to less than 3 prevents breeding entirely.";
+		policeCrowd = prop.getBoolean();
+
+		
+		
 		config.save();
 		updateBlacklist();
 	}
@@ -101,14 +114,43 @@ public class ConfigManager {
 		Save();
 	}
 	
+	public void changeCrowdLimit(int newLimit)
+	{
+		if (newLimit < 1)
+		{
+			newLimit = 1;
+		}
+		crowdLimit = newLimit;
+		Save();
+	}
+	
 	public void changeInterval(int newInterval)
 	{
-		timeInterval = newInterval;
+		if (newInterval < 1)
+			newInterval = 1;
+		else
+			timeInterval = newInterval;
 		Save();
 	}
 	public void changeTPSForUnload(int newTPS)
 	{
-		TPSForUnload = newTPS;
+		if (newTPS > 15)
+			TPSForUnload = 15;
+		else
+			TPSForUnload = newTPS;
+		Save();
+	}
+	
+	public void togglePolice()
+	{
+		if (policeCrowd)
+		{
+			policeCrowd = false;
+		}
+		else
+		{
+			policeCrowd = true;
+		}
 		Save();
 	}
 	
@@ -176,6 +218,14 @@ public class ConfigManager {
 		prop.set(TPSForUnload);
 		prop.comment = "If the server's main TPS drops below this number, \n Lag'B'Gon will try to unload chunks to improve TPS";
 
+		prop = config.get("Breeding", "CrowdLimit", 10);
+		prop.set(crowdLimit);
+		
+		prop = config.get("Breeding", "PoliceCrowding", false);
+		prop.set(policeCrowd);
+		prop.comment ="Prevent overbreeding.  If at least CrowdLimit breedable \n animals are within five blocks, new babies will not \nspawn.";
+		prop.comment = prop.comment + "\n Setting this value to less than 3 prevents breeding entirely.";
+				
 		
 		config.save();
 	}

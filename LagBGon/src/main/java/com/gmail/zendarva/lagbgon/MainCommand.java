@@ -1,6 +1,5 @@
 package com.gmail.zendarva.lagbgon;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
@@ -8,7 +7,6 @@ import java.util.Random;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -33,8 +31,7 @@ public class MainCommand extends CommandBase {
 
 	@Override
 	public String getCommandUsage(ICommandSender p_71518_1_) {
-		// TODO Auto-generated method stub
-		return "/bgon clear : Clears all entities and itemstacks";
+		return "/bgon : Shows help for using Lag'B'Gon";
 	}
 
 	@Override
@@ -75,6 +72,16 @@ public class MainCommand extends CommandBase {
 
 			break;
 		case 1:
+			if (args[0].equals("togglepolice"))
+			{
+				config.togglePolice();
+				if (ConfigManager.policeCrowd)
+					chat = new ChatComponentText("Breeding policing enabled.");
+				else
+					chat = new ChatComponentText("Breeding policing disabled");
+				sender.addChatMessage(chat);
+					
+			}
 			if (args[0].equals("unload"))
 			{
 				unloadChunks();
@@ -178,6 +185,13 @@ public class MainCommand extends CommandBase {
 			}
 			
 		case 2:
+			if (args[0].equals("setbreedlimit"))
+			{
+				int limit = Integer.parseInt(args[1]);
+				config.changeCrowdLimit(limit);
+				chat = new ChatComponentText("Breeding limit set to: "+ ConfigManager.crowdLimit);
+					
+			}
 			if (args[0].equals("toggleentity"))
 			{
 				config.toggleEntity(args[1]);
@@ -272,7 +286,7 @@ public class MainCommand extends CommandBase {
 
 	@Override
 	public int getRequiredPermissionLevel() {
-		// TODO Auto-generated method stub
+		
 		return 2;
 	}
 
@@ -308,6 +322,7 @@ public class MainCommand extends CommandBase {
 			{
 				cPS = (ChunkProviderServer) world.getChunkProvider();
 				
+				@SuppressWarnings("rawtypes")
 				Iterator iter = cPS.loadedChunks.iterator();
 				
 				while (iter.hasNext())

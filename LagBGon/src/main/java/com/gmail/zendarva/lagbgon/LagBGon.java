@@ -37,14 +37,6 @@ public class LagBGon
     {
     	
     	
-    	/*for (Object obj : Item.itemRegistry.getKeys())
-    	{
-    		System.out.println(obj);
-    	}
-    	*/
-    	
-    	
-    	
     }
     
     @NetworkCheckHandler
@@ -64,6 +56,10 @@ public class LagBGon
     		//MinecraftForge.EVENT_BUS.register(tickHandler);
 			FMLCommonHandler.instance().bus().register(tickHandler);
     	}
+		//if (ConfigManager.policeCrowd)
+		//{
+		MinecraftForge.EVENT_BUS.register(new SpawnHandler());
+	//	}
     }
     
     @EventHandler
