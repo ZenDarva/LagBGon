@@ -69,6 +69,12 @@ public class MainCommand extends CommandBase {
 			sender.addChatMessage(chat);
 			chat = new ChatComponentText("/bgon unload : Unloads unused chunks.");
 			sender.addChatMessage(chat);
+			chat = new ChatComponentText("/bgon togglepolice : Toggles Breeding policing.");
+			sender.addChatMessage(chat);
+			chat = new ChatComponentText("/bgon setbreedlimit <amount> : Sets the limit for breeding");
+			sender.addChatMessage(chat);
+
+
 
 			break;
 		case 1:
