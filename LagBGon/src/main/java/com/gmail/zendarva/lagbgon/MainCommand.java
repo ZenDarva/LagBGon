@@ -2,16 +2,19 @@ package com.gmail.zendarva.lagbgon;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -73,11 +76,17 @@ public class MainCommand extends CommandBase {
 			sender.addChatMessage(chat);
 			chat = new ChatComponentText("/bgon setbreedlimit <amount> : Sets the limit for breeding");
 			sender.addChatMessage(chat);
+			chat = new ChatComponentText("/bgon scanentities : Lists nearby entities,by name, for blacklisting.");
+			sender.addChatMessage(chat);
 
 
 
 			break;
 		case 1:
+			if (args[0].equals("scanentities"))
+			{
+				scanEntities(plr);
+			}
 			if (args[0].equals("togglepolice"))
 			{
 				config.togglePolice();
@@ -231,7 +240,35 @@ public class MainCommand extends CommandBase {
 				chat = new ChatComponentText("New TPS minimum set to: " + newTPS);
 				sender.addChatMessage(chat);
 			}
-					
+			
+		default:
+			if (args[0].equals("toggleentity"))
+			{
+				StringBuilder name = new StringBuilder();
+				for (String word : args)
+				{
+					if (!word.equals("toggleentity"))
+					{
+						name.append(word);
+						name.append(" ");
+					}
+				}
+				name.replace(name.length()-1, name.length(), "");
+				
+				config.toggleEntity(name.toString());
+				
+				if (config.isBlacklisted(name.toString()))
+				{
+					chat = new ChatComponentText(name.toString() + " has been added to the blacklist.");
+					sender.addChatMessage(chat);
+				}
+				else
+				{
+					chat = new ChatComponentText(name.toString() + " has been removed from the blacklist.");
+					sender.addChatMessage(chat);
+				}
+				return;
+			}
 		}
 
 	}
@@ -383,6 +420,45 @@ public class MainCommand extends CommandBase {
         	}
         }
         return false;
+	}
+	
+	private void scanEntities(EntityPlayer plr)
+	{
+		AxisAlignedBB bb;
+		Entity ent;
+		ChatComponentText chat;
+		bb = AxisAlignedBB.getBoundingBox(plr.posX -5, plr.posY-5, plr.posZ-5, plr.posX+5,plr.posY+5,plr.posZ+5);
+		List Entities = plr.worldObj.getEntitiesWithinAABB(Entity.class, bb);
+		ArrayList<String> entityNames = new ArrayList();
+		for (Object obj : Entities)
+		{
+			ent = (Entity) obj;
+			if (!entityNames.contains(ent.getCommandSenderName()))
+			{
+				entityNames.add(ent.getCommandSenderName());
+			}
+			
+		}
+		
+		StringBuilder line = new StringBuilder();
+		chat = new ChatComponentText("Nearby Entities");
+		plr.addChatMessage(chat);
+		for (String item : entityNames)
+		{
+			if (line.length() > 40)
+			{
+				chat = new ChatComponentText(line.toString());
+				plr.addChatMessage(chat);
+				line = new StringBuilder();
+			}
+				line.append(item);
+				line.append(", ");						
+		}
+		if (line.length() > 0)
+		{
+			chat = new ChatComponentText((String) line.toString().subSequence(0, line.length()-2));
+			plr.addChatMessage(chat);
+		}
 	}
 	
 }

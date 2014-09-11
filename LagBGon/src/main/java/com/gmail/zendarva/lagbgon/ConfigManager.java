@@ -164,7 +164,8 @@ public class ConfigManager {
 		else
 		{
 			itemBlacklist.add(Item.itemRegistry.getNameForObject(item));
-			itemsBlackList.add(item);		}
+			itemsBlackList.add(item);	
+		}
 		Save();
 	}
 	public void toggleEntity(String name)
@@ -200,12 +201,13 @@ public class ConfigManager {
 	private void Save()
 	{
 		Property prop;
+		
 		prop = config.get(Configuration.CATEGORY_GENERAL, "EntityBlackList", "");
 		prop.set(entityBlacklist.toArray(new String[entityBlacklist.size()]));
 		prop.comment ="List of Entities not to destroy.";
 		
 		prop = config.get(Configuration.CATEGORY_GENERAL, "ItemBlackList", "");
-		prop.set(itemBlacklist.toArray(new String[entityBlacklist.size()]));
+		prop.set(itemBlacklist.toArray(new String[itemBlacklist.size()]));
 		prop.comment = "List of Items not to destroy";
 		
 		prop = config.get(Configuration.CATEGORY_GENERAL, "Interval", 0);
