@@ -8,7 +8,6 @@ import java.util.Random;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -78,8 +77,8 @@ public class MainCommand extends CommandBase {
 			sender.addChatMessage(chat);
 			chat = new ChatComponentText("/bgon scanentities : Lists nearby entities,by name, for blacklisting.");
 			sender.addChatMessage(chat);
-
-
+			chat = new ChatComponentText("/bgon maxperchunk : Sets maximum entities to spawn per chunk");
+			sender.addChatMessage(chat);
 
 			break;
 		case 1:
@@ -200,12 +199,19 @@ public class MainCommand extends CommandBase {
 			}
 			
 		case 2:
+			if (args[0].equals("maxperchunk"))
+			{
+				int max = Integer.parseInt(args[1]);
+				config.changeMaxPerChunk(max);
+				chat = new ChatComponentText("New Maximium spawns per chunk: " + max);
+				sender.addChatMessage(chat);					
+			}
 			if (args[0].equals("setbreedlimit"))
 			{
 				int limit = Integer.parseInt(args[1]);
 				config.changeCrowdLimit(limit);
 				chat = new ChatComponentText("Breeding limit set to: "+ ConfigManager.crowdLimit);
-					
+				sender.addChatMessage(chat);	
 			}
 			if (args[0].equals("toggleentity"))
 			{
@@ -428,8 +434,9 @@ public class MainCommand extends CommandBase {
 		Entity ent;
 		ChatComponentText chat;
 		bb = AxisAlignedBB.getBoundingBox(plr.posX -5, plr.posY-5, plr.posZ-5, plr.posX+5,plr.posY+5,plr.posZ+5);
-		List Entities = plr.worldObj.getEntitiesWithinAABB(Entity.class, bb);
-		ArrayList<String> entityNames = new ArrayList();
+		@SuppressWarnings("unchecked")
+		List<Object> Entities = plr.worldObj.getEntitiesWithinAABB(Entity.class, bb);
+		ArrayList<String> entityNames = new ArrayList<String>();
 		for (Object obj : Entities)
 		{
 			ent = (Entity) obj;

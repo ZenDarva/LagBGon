@@ -24,6 +24,7 @@ public class ConfigManager {
 	public static int crowdLimit;
 	public static boolean policeCrowd;
 	
+	public static int perChunkSpawnLimit;
 	
 	private static ConfigManager myInstance; 
 	
@@ -88,7 +89,9 @@ public class ConfigManager {
 		prop.comment = prop.comment + "\n Setting this value to less than 3 prevents breeding entirely.";
 		policeCrowd = prop.getBoolean();
 
-		
+		prop = config.get(Configuration.CATEGORY_GENERAL, "PerChunkSpawnLimit", 0);
+		prop.comment = "Maximum mobs spawnable per chunk.  0 disables.";
+		perChunkSpawnLimit = prop.getInt();
 		
 		config.save();
 		updateBlacklist();
@@ -111,6 +114,16 @@ public class ConfigManager {
 		}
 		else
 			automaticRemoval = true;
+		Save();
+	}
+	
+	public void changeMaxPerChunk(int newMax)
+	{
+		if (newMax < 0)
+		{
+			newMax = 0;
+		}
+		perChunkSpawnLimit = newMax;
 		Save();
 	}
 	
@@ -227,7 +240,12 @@ public class ConfigManager {
 		prop.set(policeCrowd);
 		prop.comment ="Prevent overbreeding.  If at least CrowdLimit breedable \n animals are within five blocks, new babies will not \nspawn.";
 		prop.comment = prop.comment + "\n Setting this value to less than 3 prevents breeding entirely.";
-				
+
+		prop = config.get(Configuration.CATEGORY_GENERAL, "PerChunkSpawnLimit", 0);
+		prop.comment = "Maximum mobs spawnable per chunk.  0 disables.";
+		prop.set(perChunkSpawnLimit);
+
+		
 		
 		config.save();
 	}

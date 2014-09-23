@@ -14,7 +14,6 @@ import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
-import cpw.mods.fml.common.eventhandler.EventBus;
 import cpw.mods.fml.common.network.NetworkCheckHandler;
 import cpw.mods.fml.relauncher.Side;
 
@@ -22,7 +21,7 @@ import cpw.mods.fml.relauncher.Side;
 public class LagBGon
 {
     public static final String MODID = "LagBGon";
-    public static final String VERSION = ".1.1";
+    public static final String VERSION = ".1.2";
     
     @Mod.Instance("lagbgon")
     public static LagBGon instance;
@@ -42,6 +41,8 @@ public class LagBGon
     @NetworkCheckHandler
     public boolean checkMods(Map<String, String> mods, Side side)
     {
+    	
+    	//Look here later for client side gui config checking.
     	return true;
     }
     
@@ -50,16 +51,10 @@ public class LagBGon
     {
     	ConfigManager.instance().Init(event);
     	ConfigManager.instance().Load();
-		if (ConfigManager.automaticRemoval == true)
-    	{
-			tickHandler = new TickHandler();
-    		//MinecraftForge.EVENT_BUS.register(tickHandler);
-			FMLCommonHandler.instance().bus().register(tickHandler);
-    	}
-		//if (ConfigManager.policeCrowd)
-		//{
+		tickHandler = new TickHandler();
+   		//MinecraftForge.EVENT_BUS.register(tickHandler);
+		FMLCommonHandler.instance().bus().register(tickHandler);
 		MinecraftForge.EVENT_BUS.register(new SpawnHandler());
-	//	}
     }
     
     @EventHandler
