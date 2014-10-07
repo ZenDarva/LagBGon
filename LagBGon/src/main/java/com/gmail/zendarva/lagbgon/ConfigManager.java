@@ -26,7 +26,10 @@ public class ConfigManager {
 	
 	public static int perChunkSpawnLimit;
 	
+	public static boolean blacklist;
+	
 	private static ConfigManager myInstance; 
+	
 	
 	private Configuration config;
 	
@@ -93,6 +96,10 @@ public class ConfigManager {
 		prop.comment = "Maximum mobs spawnable per chunk.  0 disables.";
 		perChunkSpawnLimit = prop.getInt();
 		
+		prop = config.get(Configuration.CATEGORY_GENERAL, "Blacklist", true);
+		prop.comment = "Should we use a blacklist or a whitelist for mob removal? \n Blacklist is default.";
+		blacklist = prop.getBoolean();
+		
 		config.save();
 		updateBlacklist();
 	}
@@ -114,6 +121,16 @@ public class ConfigManager {
 		}
 		else
 			automaticRemoval = true;
+		Save();
+	}
+	
+	public void toggleBlacklist()
+	{
+		if (blacklist)
+		{
+			blacklist = false;
+		}
+		else blacklist = true;
 		Save();
 	}
 	
@@ -245,7 +262,10 @@ public class ConfigManager {
 		prop.comment = "Maximum mobs spawnable per chunk.  0 disables.";
 		prop.set(perChunkSpawnLimit);
 
-		
+		prop = config.get(Configuration.CATEGORY_GENERAL, "Blacklist", true);
+		prop.comment = "Should we use a blacklist or a whitelist for mob removal? \n Blacklist is default.";
+		prop.set(blacklist);
+
 		
 		config.save();
 	}

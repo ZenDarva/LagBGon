@@ -71,6 +71,8 @@ public class MainCommand extends CommandBase {
 			sender.addChatMessage(chat);
 			chat = new ChatComponentText("/bgon unload : Unloads unused chunks.");
 			sender.addChatMessage(chat);
+			chat = new ChatComponentText("/bgon blacklist: Switches between using blacklist and whitelist");
+			sender.addChatMessage(chat);
 			chat = new ChatComponentText("/bgon togglepolice : Toggles Breeding policing.");
 			sender.addChatMessage(chat);
 			chat = new ChatComponentText("/bgon setbreedlimit <amount> : Sets the limit for breeding");
@@ -79,9 +81,22 @@ public class MainCommand extends CommandBase {
 			sender.addChatMessage(chat);
 			chat = new ChatComponentText("/bgon maxperchunk : Sets maximum entities to spawn per chunk");
 			sender.addChatMessage(chat);
+			
 
 			break;
 		case 1:
+			if (args[0].equals("blacklist"))
+			{
+				config.toggleBlacklist();
+				if (ConfigManager.blacklist)
+				{
+					chat = new ChatComponentText("Blacklist enabled.");
+				}
+				else
+					chat = new ChatComponentText("Whitelist enabled");
+				sender.addChatMessage(chat);
+			}
+			
 			if (args[0].equals("scanentities"))
 			{
 				scanEntities(plr);
@@ -304,21 +319,33 @@ public class MainCommand extends CommandBase {
 				if (obj instanceof EntityItem)
 				{
 					item = (EntityItem) obj;
-					if (!config.isBlacklisted(item.getEntityItem().getItem()))
+					if (ConfigManager.blacklist && !config.isBlacklisted(item.getEntityItem().getItem()))
 					{
 						toRemove.add(item);
 						itemsRemoved++;
 					}
+					if (!ConfigManager.blacklist && !config.isBlacklisted(item.getEntityItem().getItem()))
+					{
+						toRemove.add(item);
+						itemsRemoved++;
+					}
+
 						
 				}
 				else if (!(obj instanceof EntityPlayer))
 				{
 					entity = (Entity) obj;
-					if (!config.isBlacklisted(entity))
+					if (!config.isBlacklisted(entity) && ConfigManager.blacklist)
 					{
 						toRemove.add(entity);
 						entitiesRemoved++;
 					}
+					if (config.isBlacklisted(entity) && !ConfigManager.blacklist)
+					{
+						toRemove.add(entity);
+						entitiesRemoved++;
+					}
+
 				}
 			}
 			for (Object o : toRemove)
